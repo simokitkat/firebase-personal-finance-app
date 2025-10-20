@@ -15,27 +15,26 @@ const Auth: React.FC<IProps> = ({ children, checkingFor }) => {
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
-      setIsLoading(false);
-
       if (checkingFor === "protected") {
         if (!user) {
           router.replace("/");
-          return null;
         }
-      } else {
-        //here we handle public routes
+      } else if (checkingFor === "public") {
         if (user) {
           router.replace("/overview");
-          return null;
         }
       }
+      setIsLoading(false);
     });
 
     return () => unsubscribe();
   }, [router, checkingFor]);
 
-  if (isLoading) return <h1>Loading...</h1>;
+  if (isLoading) {
+    return <h1>Loading...</h1>;
+  }
 
-  return <>{children}</>;
+  return children;
 };
+
 export default Auth;

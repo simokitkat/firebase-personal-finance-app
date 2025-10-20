@@ -1,4 +1,5 @@
 import Auth from "@/components/Auth";
+import SideBar from "@/components/SideBar";
 
 export default function RootLayout({
   children,
@@ -6,10 +7,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
-        <Auth checkingFor="protected">{children}</Auth>
-      </body>
-    </html>
+    <>
+      <Auth checkingFor="protected">
+        <SideBar>{children}</SideBar>
+      </Auth>
+    </>
   );
 }
