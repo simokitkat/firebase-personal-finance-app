@@ -1,6 +1,8 @@
 "use client";
 
-import { auth } from "@/lib/firebase/config";
+import { auth } from "@/lib/firebase/client";
+import { Card } from "@/lib/shadcn/components/ui/card";
+import { Loader } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -31,7 +33,11 @@ const Auth: React.FC<IProps> = ({ children, checkingFor }) => {
   }, [router, checkingFor]);
 
   if (isLoading) {
-    return <h1>Loading...</h1>;
+    return (
+      <Card className="w-screen h-screen flex justify-center items-center border-0 rounded-none">
+        <Loader className="animate-spin" />
+      </Card>
+    );
   }
 
   return children;

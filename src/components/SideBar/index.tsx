@@ -1,5 +1,6 @@
 "use client";
-import { auth } from "@/lib/firebase/config";
+import { clearSessionCookie } from "@/app/actions/auth";
+import { auth } from "@/lib/firebase/client";
 import { AvatarFallback, AvatarImage } from "@/lib/shadcn/components/ui/avatar";
 import { Button } from "@/lib/shadcn/components/ui/button";
 import navigationLinks from "@/utils/navigationLinks";
@@ -7,6 +8,7 @@ import { Avatar } from "@radix-ui/react-avatar";
 import { signOut } from "firebase/auth";
 import { LogOut, Menu } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface IProps {
@@ -16,9 +18,35 @@ interface IProps {
 const SideBar: React.FC<IProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const router = useRouter();
 
   const handleLogout = async () => {
-    await signOut(auth);
+    console.log("Logout initiated...");
+    try {
+      // 1. Call the Server Action to clear the session cookie
+      const clearResult = await clearSessionCookie();
+      console.log("Server Action clearSessionCookie Result:", clearResult);
+
+      if (!clearResult?.success) {
+        // Log the error but proceed with client sign-out anyway
+        console.error("Failed to clear session cookie:", clearResult?.error);
+      }
+
+      // 2. Sign out the user from the Firebase Client SDK
+      await signOut(auth); //
+      console.log("Firebase Client Sign-Out Successful.");
+
+      // 3. Redirect to the login page
+      console.log("Redirecting to login page...");
+      router.replace("/");
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(
+          "Logout error (client-side or action call):",
+          error.message
+        );
+      }
+    }
   };
 
   const handleCloseSideBar = () => setSidebarOpen(false);
@@ -29,7 +57,7 @@ const SideBar: React.FC<IProps> = ({ children }) => {
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black opacity-50 lg:hidden"
           onClick={handleCloseSideBar}
         />
       )}
@@ -86,8 +114,9 @@ const SideBar: React.FC<IProps> = ({ children }) => {
                     alt="@shadcn"
                   />
                 )}
+
                 <AvatarFallback>
-                  {auth?.currentUser?.displayName?.slice(0, 2)}
+                  {auth?.currentUser?.displayName?.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">

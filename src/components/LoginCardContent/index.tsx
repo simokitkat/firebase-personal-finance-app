@@ -1,29 +1,63 @@
 "use client";
 
-import { auth, googleAuthProvider } from "@/lib/firebase/config";
+import { createSessionCookie } from "@/app/actions/auth";
+import { auth, googleAuthProvider } from "@/lib/firebase/client";
 import { Alert, AlertDescription } from "@/lib/shadcn/components/ui/alert";
 import { Button } from "@/lib/shadcn/components/ui/button";
 import { CardContent } from "@/lib/shadcn/components/ui/card";
-import { signInWithPopup } from "firebase/auth";
-import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { getIdToken, signInWithPopup } from "firebase/auth";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 const LoginCardContent = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      await signInWithPopup(auth, googleAuthProvider);
+      const userCredential = await signInWithPopup(auth, googleAuthProvider);
+      const user = userCredential.user;
 
-      setIsAuthenticated(true);
+      if (user) {
+        console.log("Firebase Client Sign-In Successful. User:", user.uid); //
+
+        // Get the Firebase ID Token (force refresh recommended for session creation)
+        const idToken = await getIdToken(user, /*forceRefresh*/ true); //
+        console.log("Obtained ID Token.");
+
+        // 3. Call the Server Action to create the session cookie
+        const cookieResult = await createSessionCookie(idToken);
+        console.log("Server Action createSessionCookie Result:", cookieResult);
+
+        if (!cookieResult?.success) {
+          // If cookie creation fails, show error, maybe sign the user out client-side?
+          setError(
+            cookieResult?.error || "Failed to create session. Please try again."
+          );
+          return; // Stop the process here
+        }
+
+        // 4. Redirect to the protected area (middleware will handle subsequent checks)
+        console.log("Redirecting to /overview...");
+        router.replace("/overview");
+      } else {
+        // Should not happen if signInWithPopup resolves, but good practice
+        throw new Error(
+          "Authentication failed: No user object found after sign-in."
+        );
+      }
     } catch (err) {
-      setError("Authentication failed. Please try again.");
-      console.error("Google login error:", err);
+      if (err instanceof Error) {
+        setError(
+          `Authentication failed: ${err.message || "Please try again."}`
+        );
+        console.error("Google login error:", err);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -66,15 +100,6 @@ const LoginCardContent = () => {
 
       {/* Status Messages */}
       <div className="mt-4">
-        {isAuthenticated && (
-          <Alert className="border-green-200 bg-green-50 text-green-800">
-            <CheckCircle className="h-4 w-4" />
-            <AlertDescription>
-              Successfully authenticated! Redirecting to dashboard...
-            </AlertDescription>
-          </Alert>
-        )}
-
         {error && (
           <Alert className="border-red-200 bg-red-50 text-red-800">
             <AlertCircle className="h-4 w-4" />
