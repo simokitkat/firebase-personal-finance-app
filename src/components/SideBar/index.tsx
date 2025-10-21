@@ -53,7 +53,7 @@ const SideBar: React.FC<IProps> = ({ children }) => {
   const handleOpenSideBar = () => setSidebarOpen(true);
 
   return (
-    <section className="flex min-h-screen bg-gray-50">
+    <section className="flex h-screen bg-gray-50">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div

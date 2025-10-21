@@ -1,4 +1,3 @@
-import Auth from "@/components/Auth";
 import LoginCardContent from "@/components/LoginCardContent";
 import {
   Card,

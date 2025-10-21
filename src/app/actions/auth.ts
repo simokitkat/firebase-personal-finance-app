@@ -1,5 +1,4 @@
-// src/app/actions/auth.ts
-"use server"; // Mark this file as Server Actions
+"use server";
 
 import { adminAuth } from "@/lib/firebase/admin";
 import { cookies } from "next/headers";
