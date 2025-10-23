@@ -8,7 +8,7 @@ import { Avatar } from "@radix-ui/react-avatar";
 import { signOut } from "firebase/auth";
 import { LogOut, Menu } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface IProps {
@@ -17,7 +17,7 @@ interface IProps {
 
 const SideBar: React.FC<IProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+  const pathname = usePathname();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -87,16 +87,13 @@ const SideBar: React.FC<IProps> = ({ children }) => {
             {navigationLinks.map((item) => (
               <Link
                 key={item.id}
-                onClick={() => {
-                  setActiveTab(item.name);
-                  handleCloseSideBar();
-                }}
                 className={`flex items-center gap-3 w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                  activeTab === item.name
+                  pathname === `/${item.id}`
                     ? "bg-blue-50 text-blue-700"
                     : "text-gray-600 hover:bg-gray-50"
                 }`}
                 href={`/${item.id}`}
+                onClick={handleCloseSideBar}
               >
                 <item.icon className="h-5 w-5" />
                 {item.name}
@@ -106,7 +103,7 @@ const SideBar: React.FC<IProps> = ({ children }) => {
 
           {/* User Section */}
           <div className="p-4 border-t border-gray-200">
-            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer">
+            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50">
               <Avatar className="h-10 w-10">
                 {auth?.currentUser?.photoURL && (
                   <AvatarImage

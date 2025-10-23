@@ -1,17 +1,13 @@
 import {
-  ArrowRight,
-  Calendar,
-  DollarSign,
   Home,
-  PiggyBank,
+  ArrowRight,
+  PieChart, // A good icon for "Financial Analysis"
 } from "lucide-react";
 
 const navigationLinks = [
   { id: "overview", name: "Overview", icon: Home },
   { id: "transactions", name: "Transactions", icon: ArrowRight },
-  { id: "budgets", name: "Budgets", icon: DollarSign },
-  { id: "pots", name: "Pots", icon: PiggyBank },
-  { id: "recurring-bills", name: "Recurring Bills", icon: Calendar },
+  { id: "financial-analysis", name: "Financial Analysis", icon: PieChart },
 ];
 
 export default navigationLinks;
