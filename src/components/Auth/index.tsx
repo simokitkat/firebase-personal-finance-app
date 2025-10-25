@@ -23,7 +23,7 @@ const Auth: React.FC<IProps> = ({ children, checkingFor }) => {
         }
       } else if (checkingFor === "public") {
         if (user) {
-          router.replace("/overview");
+          router.replace("/first-wallet");
         }
       }
       setIsLoading(false);
