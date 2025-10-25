@@ -1,6 +1,31 @@
 export const runtime = "nodejs";
 import { NextResponse, type NextRequest } from "next/server";
-import { adminAuth } from "@/lib/firebase/admin"; // Make sure path is correct
+import { adminAuth, adminDb } from "@/lib/firebase/admin"; // Make sure path is correct
+
+// --- Helper Function to Check Wallet Existence ---
+async function checkUserHasWallets(userId: string): Promise<boolean> {
+  try {
+    const walletsQuery = adminDb
+      .collection("wallets")
+      .where("userId", "==", userId)
+      .where("isActive", "==", true)
+      .limit(1); // We only need to know if at least one exists
+
+    const walletsSnapshot = await walletsQuery.get();
+    console.log(
+      `Middleware: Wallet check for ${userId}. Found: ${!walletsSnapshot.empty}`
+    );
+    return !walletsSnapshot.empty;
+  } catch (error) {
+    console.error(
+      `Middleware: Error checking wallets for user ${userId}:`,
+      error
+    );
+    // Fail safe: If DB check fails, maybe let them proceed? Or redirect to an error page?
+    // Let's assume for now they might have wallets if the check fails.
+    return true; // Or handle error appropriately
+  }
+}
 
 // Function to verify the session cookie using Firebase Admin SDK
 async function verifySessionCookie(cookieValue: string | undefined) {
@@ -38,62 +63,75 @@ export async function middleware(request: NextRequest) {
   // 1. Define Public Paths (accessible without login)
   //    Includes the root login page and potentially others like /about, /pricing
   const publicPaths = ["/"]; // Your root page is the login page
+  const firstWalletPath = "/first-wallet";
+  const isPublicPath = publicPaths.includes(pathname);
+  const isFirstWalletPath = pathname === firstWalletPath;
 
-  // 2. Define Protected Paths Prefix
-  const isProtectedPath = !publicPaths.some((path) => path === pathname);
-
-  // 3. Verify the session cookie
+  // 2. Verify the session cookie
   const decodedToken = await verifySessionCookie(sessionCookie);
   const isAuthenticated = !!decodedToken; // True if decodedToken is not null
 
-  // 4. Handle Redirections
+  // 3. Handle Redirections
   const loginUrl = new URL("/", request.url); // URL for the login page
-  const dashboardUrl = new URL("/overview", request.url); // URL for the main dashboard page
+  const overviewUrl = new URL("/overview", request.url); // URL for the main dashboard page
+  const firstWalletUrl = new URL(firstWalletPath, request.url);
 
-  // If accessing a PROTECTED path
-  if (isProtectedPath) {
-    if (!isAuthenticated) {
-      // User is NOT logged in, redirect to login page
+  // --- Logic ---
+
+  if (isAuthenticated) {
+    // --- Authenticated User Logic ---
+    const userId = decodedToken.uid;
+    const hasWallets = await checkUserHasWallets(userId);
+
+    if (isPublicPath) {
+      // Authenticated user on login page -> redirect to overview or first-wallet
+      console.log(
+        `Middleware: Authenticated user on public path ${pathname}. Redirecting.`
+      );
+      return NextResponse.redirect(hasWallets ? overviewUrl : firstWalletUrl);
+    }
+
+    if (!hasWallets && !isFirstWalletPath) {
+      // Authenticated user *without* wallets trying to access something other than setup page -> redirect to setup
+      console.log(
+        `Middleware: Authenticated user ${userId} has no wallets. Redirecting to ${firstWalletPath}.`
+      );
+      return NextResponse.redirect(firstWalletUrl);
+    }
+
+    if (hasWallets && isFirstWalletPath) {
+      // Authenticated user *with* wallets trying to access setup page -> redirect to overview
+      console.log(
+        `Middleware: Authenticated user ${userId} already has wallets. Redirecting from ${firstWalletPath} to overview.`
+      );
+      return NextResponse.redirect(overviewUrl);
+    }
+
+    // Authenticated user with wallets accessing protected pages (or without wallets accessing setup page) -> Allow
+    console.log(
+      `Middleware: Authenticated access allowed for ${pathname}. Has Wallets: ${hasWallets}`
+    );
+    return NextResponse.next();
+  } else {
+    // --- Unauthenticated User Logic ---
+    if (!isPublicPath) {
+      // Unauthenticated user trying to access protected path -> redirect to login
       console.log(
         `Middleware: Unauthenticated access to protected route ${pathname}. Redirecting to login.`
       );
       return NextResponse.redirect(loginUrl);
     }
-    // User IS logged in, allow access
-    console.log(`Middleware: Authenticated access allowed for ${pathname}.`);
-    return NextResponse.next();
-  }
 
-  // If accessing a PUBLIC path
-  if (publicPaths.includes(pathname)) {
-    if (isAuthenticated) {
-      // User IS logged in, redirect away from login page to dashboard
-      console.log(
-        `Middleware: Authenticated user accessing public route ${pathname}. Redirecting to dashboard.`
-      );
-      return NextResponse.redirect(dashboardUrl);
-    }
-    // User is NOT logged in, allow access to public page
+    // Unauthenticated user on public path -> Allow
     console.log(
       `Middleware: Unauthenticated access allowed for public route ${pathname}.`
     );
     return NextResponse.next();
   }
-
-  // Default: Allow access if path doesn't match protected/public rules (e.g., API routes matched by config below)
-  return NextResponse.next();
 }
 
-// Configure the middleware matcher
+// Configure the middleware matcher (keep your existing one)
 export const config = {
-  /*
-   * Match all request paths except for the ones starting with:
-   * - api (API routes)
-   * - _next/static (static files)
-   * - _next/image (image optimization files)
-   * - favicon.ico (favicon file)
-   * - Include any other public assets (images, svgs, etc.) if needed
-   */
   matcher: [
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
