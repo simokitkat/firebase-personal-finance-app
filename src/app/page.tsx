@@ -5,6 +5,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/lib/shadcn/components/ui/card";
+import Image from "next/image";
 
 export default function GoogleLoginPage() {
   return (
@@ -12,11 +13,13 @@ export default function GoogleLoginPage() {
       <div className="w-full max-w-md">
         {/* Logo and App Name */}
         <div className="text-center mb-10">
-          <div className="mx-auto h-16 w-16 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-4">
-            <div className="h-10 w-10 rounded-lg bg-white flex items-center justify-center">
-              <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500"></div>
-            </div>
-          </div>
+          <Image
+            src="/logo.svg"
+            alt="FinTrack Logo"
+            width={64}
+            height={64}
+            className="mx-auto mb-4"
+          />
           <h1 className="text-3xl font-bold text-gray-800">FinTrack</h1>
           <p className="text-gray-600 mt-2">Your personal finance companion</p>
         </div>

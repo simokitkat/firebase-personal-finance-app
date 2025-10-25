@@ -7,6 +7,7 @@ import navigationLinks from "@/utils/navigationLinks";
 import { Avatar } from "@radix-ui/react-avatar";
 import { signOut } from "firebase/auth";
 import { LogOut, Menu } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -71,7 +72,10 @@ const SideBar: React.FC<IProps> = ({ children }) => {
         <div className="flex flex-col h-full">
           {/* Logo and Close Button (Mobile) */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 lg:hidden">
-            <h1 className="text-xl font-bold text-gray-800">FinTrack</h1>
+            <h1 className="text-xl font-bold text-gray-800 flex items-center gap-4">
+              FinTrack
+              <Image src="/logo.svg" alt="logo" width={24} height={24} />
+            </h1>
             <Button variant="ghost" size="sm" onClick={handleCloseSideBar}>
               <Menu className="h-5 w-5" />
             </Button>
@@ -79,7 +83,10 @@ const SideBar: React.FC<IProps> = ({ children }) => {
 
           {/* Logo (Desktop) */}
           <div className="hidden lg:block p-6 border-b border-gray-200">
-            <h1 className="text-xl font-bold text-gray-800">FinTrack</h1>
+            <h1 className="text-xl font-bold text-gray-800 flex items-center gap-4">
+              FinTrack
+              <Image src="/logo.svg" alt="logo" width={24} height={24} />
+            </h1>
           </div>
 
           {/* Navigation */}
@@ -148,7 +155,9 @@ const SideBar: React.FC<IProps> = ({ children }) => {
           <Button variant="ghost" size="sm" onClick={handleOpenSideBar}>
             <Menu className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold text-gray-800">FinTrack</h1>
+          <h1 className="text-lg font-semibold text-gray-800 flex items-center gap-4">
+            FinTrack <Image src="/logo.svg" alt="logo" width={24} height={24} />
+          </h1>
           <div className="w-8" /> {/* Spacer for alignment */}
         </div>
 
